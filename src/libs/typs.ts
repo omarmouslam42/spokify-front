@@ -43,3 +43,9 @@ export type LoginResponse = {
   token?: string;
   user?: User;
 };
+
+
+export type TrelloReq = {
+  board_name: string;
+  list_name: string;
+};

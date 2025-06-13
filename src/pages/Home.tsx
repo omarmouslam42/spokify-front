@@ -25,6 +25,7 @@ import {
 import { Summary } from "../Components/Summary";
 import { ExtractTask } from "../Components/ExtractTask";
 import { Detect_topics } from "../Components/Detect_topics";
+import { TrelloModal } from "../Components/Trello";
 
 interface TranscriptionResult {
   text: string;
@@ -97,6 +98,8 @@ export const Home = () => {
     isLoading: false,
     hidden: true,
   });
+
+  const [openTrello, setOpenTrello] = useState(false);
 
   const mediaRecorder = useRef<MediaRecorder | null>(null);
   const audioChunks = useRef<Blob[]>([]);
@@ -594,7 +597,10 @@ export const Home = () => {
             >
               <h4>Summarization</h4>
             </span>
-            <span className="w-1/2 m-auto text-center rounded-lg mt-5 text-white bg-white/5 backdrop-blur-lg shadow-2xl p-4 md:p-6 border cursor-pointer border-white/10 hover:bg-white/10 duration-75">
+            <span
+              onClick={() => setOpenTrello(true)}
+              className="w-1/2 m-auto text-center rounded-lg mt-5 text-white bg-white/5 backdrop-blur-lg shadow-2xl p-4 md:p-6 border cursor-pointer border-white/10 hover:bg-white/10 duration-75"
+            >
               <h4>Add to trello</h4>
             </span>
             <span
@@ -609,52 +615,7 @@ export const Home = () => {
         {!summary?.hidden && <Summary summary={summary} />}
         {!extractTask?.hidden && <ExtractTask task={extractTask} />}
         {!detect_topics?.hidden && <Detect_topics topic={detect_topics} />}
-
-        {/* <div className="mt-10 px-4">
-          <hr className="border-white/20" />
-          <h3 className="text-white mt-4 font-bold text-2xl tracking-wide">
-            Extracted Tasks:
-          </h3>
-
-          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div className="flex items-center gap-3 p-4 rounded-xl border border-white/10 bg-gradient-to-tr from-white/10 to-white/5 shadow-lg backdrop-blur-md hover:scale-[1.02] transition-all duration-200">
-              <FcCheckmark className="text-2xl flex-shrink-0" />
-              <h4 className="text-white text-lg font-semibold">
-                dsadasdsxsadasxsadasdas
-              </h4>
-            </div>
-            <div className="flex items-center gap-3 p-4 rounded-xl border border-white/10 bg-gradient-to-tr from-white/10 to-white/5 shadow-lg backdrop-blur-md hover:scale-[1.02] transition-all duration-200">
-              <FcCheckmark className="text-2xl flex-shrink-0" />
-              <h4 className="text-white text-lg font-semibold">
-                dsadasdsxsadasxsadasdas
-              </h4>
-            </div>
-            <div className="flex items-center gap-3 p-4 rounded-xl border border-white/10 bg-gradient-to-tr from-white/10 to-white/5 shadow-lg backdrop-blur-md hover:scale-[1.02] transition-all duration-200">
-              <FcCheckmark className="text-2xl flex-shrink-0" />
-              <h4 className="text-white text-lg font-semibold">
-                dsadasdsxsadasxsadasdas
-              </h4>
-            </div>
-            <div className="flex items-center gap-3 p-4 rounded-xl border border-white/10 bg-gradient-to-tr from-white/10 to-white/5 shadow-lg backdrop-blur-md hover:scale-[1.02] transition-all duration-200">
-              <FcCheckmark className="text-2xl flex-shrink-0" />
-              <h4 className="text-white text-lg font-semibold">
-                dsadasdsxsadasxsadasdas
-              </h4>
-            </div>
-            <div className="flex items-center gap-3 p-4 rounded-xl border border-white/10 bg-gradient-to-tr from-white/10 to-white/5 shadow-lg backdrop-blur-md hover:scale-[1.02] transition-all duration-200">
-              <FcCheckmark className="text-2xl flex-shrink-0" />
-              <h4 className="text-white text-lg font-semibold">
-                dsadasdsxsadasxsadasdas
-              </h4>
-            </div>
-            <div className="flex items-center gap-3 p-4 rounded-xl border border-white/10 bg-gradient-to-tr from-white/10 to-white/5 shadow-lg backdrop-blur-md hover:scale-[1.02] transition-all duration-200">
-              <FcCheckmark className="text-2xl flex-shrink-0" />
-              <h4 className="text-white text-lg font-semibold">
-                dsadasdsxsadasxsadasdas
-              </h4>
-            </div>
-          </div>
-        </div> */}
+        <TrelloModal open={openTrello} onClose={() => setOpenTrello(false)} />
 
         {/* Footer */}
         <div className="mt-8 text-center text-purple-200 text-sm">

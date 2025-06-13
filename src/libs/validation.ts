@@ -25,3 +25,9 @@ export const LoginRegister = yup.object({
     .required("Password is required")
     .min(6, "At least 6 characters"),
 });
+
+export const trelloVal = yup.object({
+  board_name: yup.string().required("Emaboard_name is required"),
+
+  list_name: yup.string().required("list_name is required"),
+});
