@@ -1,15 +1,12 @@
-import {
-  Eye,
-  EyeOff,
-  Pencil,
-  Loader2,
-} from "lucide-react";
+import { Eye, EyeOff, Pencil, Loader2 } from "lucide-react";
 import { Controller, useForm } from "react-hook-form";
-import { RegisterSchema } from "../libs/validation";
+import { profileSchema, RegisterSchema } from "../libs/validation";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useEffect, useRef, useState } from "react";
 import { RegisterInputs } from "../libs/typs";
 import { useAuthStore } from "../store/aurhStore";
+import { ArrowLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export const Profile = () => {
   const [isSowPass, setIsShowPass] = useState<boolean>(false);
@@ -26,20 +23,20 @@ export const Profile = () => {
   const [imageBase64, setImageBase64] = useState<string | null>(
     user?.profileImage || null
   );
-
+  const navigate = useNavigate();
   console.log("user", user);
 
   const {
     handleSubmit,
     control,
     formState: { errors },
-  } = useForm<RegisterInputs>({
+  } = useForm({
     defaultValues: {
       userName: user?.userName || "",
       email: user?.email || "",
       password: "",
     },
-    resolver: yupResolver(RegisterSchema),
+    resolver: yupResolver(profileSchema),
   });
 
   const imageRef = useRef<HTMLInputElement>(null);
@@ -59,7 +56,7 @@ export const Profile = () => {
     setIsShowPass(!isSowPass);
   };
 
-  const onSubmit = async (data: RegisterInputs) => {
+  const onSubmit = async (data: any) => {
     const finalData = {
       ...data,
       profileImage: imageBase64,
@@ -80,6 +77,11 @@ export const Profile = () => {
         onSubmit={handleSubmit(onSubmit)}
         className="bg-white/5 space-y-4 backdrop-blur-xl shadow-xl border border-white/10 rounded-3xl w-full max-w-2xl p-10"
       >
+        <ArrowLeft
+          className="cursor-pointer"
+          onClick={() => navigate(-1)}
+          color="white"
+        />
         {/* Avatar */}
         <div className="flex justify-center mb-6">
           <div

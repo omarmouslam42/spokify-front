@@ -31,6 +31,13 @@ export type AuthState = {
   updateProfile: (data: RegisterInputs) => Promise<void>;
 };
 
+export type EditProfileTypes = {
+  userName?: string;
+  email?: string;
+  password?: string;
+  profileImage?: string | null;
+};
+
 export type RegisterResponse = {
   message?: string;
   success?: boolean;

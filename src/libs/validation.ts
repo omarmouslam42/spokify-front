@@ -15,6 +15,12 @@ export const RegisterSchema = yup.object({
     .min(6, "At least 6 characters"),
 });
 
+export const profileSchema = yup.object({
+  userName: yup.string(),
+  email: yup.string(),
+  password: yup.string(),
+});
+
 export const LoginRegister = yup.object({
   email: yup
     .string()
