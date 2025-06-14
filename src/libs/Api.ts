@@ -1,6 +1,7 @@
 import axios from "axios";
 
 export const BASE_URL = "http://127.0.0.1:8000";
+export const back_URL = "http://127.0.0.1:4000";
 
 // 1. رفع الملف وتفريغه
 export const transcribeAudioToText = async (file: File) => {
@@ -14,7 +15,17 @@ export const transcribeAudioToText = async (file: File) => {
 
   return data;
 };
-
+export const saveTranscriptionToDB = async (data: {
+  transcription: string;
+  enhanced: string;
+  summary: string;
+  tasks: string;
+  topics: string;
+  User: string;
+}) => {
+  const response = await axios.post(`${back_URL}/api/transcriptions`, data);
+  return response.data;
+};
 // 2. تلخيص النص
 export const getSummary = async () => {
   const { data } = await axios.get(`${BASE_URL}/summarize/`);
@@ -23,7 +34,6 @@ export const getSummary = async () => {
   return data;
 };
 
-// 3. تحسين النص
 export const getEnhancedText = async () => {
   const { data } = await axios.get(`${BASE_URL}/enhance/`);
   console.log(data);

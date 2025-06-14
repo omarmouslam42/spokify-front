@@ -26,6 +26,7 @@ import { Summary } from "../Components/Summary";
 import { ExtractTask } from "../Components/ExtractTask";
 import { Detect_topics } from "../Components/Detect_topics";
 import { TrelloModal } from "../Components/Trello";
+import { saveTranscriptionToDB } from "../libs/Api"; // استدعاء الدالة
 
 interface TranscriptionResult {
   text: string;
@@ -75,9 +76,12 @@ export const Home = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [audioURL, setAudioURL] = useState<string | null>(null);
 
-  const [transcription, setTranscription] = useState<TranscriptionResult>({
+  const [transcriptions, setTranscription] = useState<TranscriptionResult>({
     text: "",
     isLoading: false,
+  });
+  const [transcriptionsAdd, setTranscriptionAdd] = useState({
+    text: "",
   });
   const [audioData, setAudioData] = useState<Float32Array | null>(null);
   const [recordingTime, setRecordingTime] = useState(0);
@@ -177,6 +181,28 @@ export const Home = () => {
       );
     }
   };
+  // const handleFullProcessAndSave = async () => {
+  //   const processed = await processFullPipeline(file, user.id);
+  
+  //   const payload = {
+  //     transcription: processed?.test,
+  //     enhanced: processed?.text, 
+  //     summary: processed?.metadata.main_point,
+  //     tasks: processed?.tasks.map(t => `* ${t.task}`).join("\n"),
+  //     topics: processed?.metadata?.tags.map(t => `* ${t}`).join("\n"),
+  //     User: user.id,
+  //   };
+  
+  //   console.log("📦 Final payload to DB:", payload);
+  
+  //   try {
+  //     const res = await saveTranscriptionToDB(payload);
+  //     console.log("✅ Saved to DB:", res);
+  //   } catch (error) {
+  //     console.error("❌ Error saving to DB:", error);
+  //   }
+  // };
+
 
   const visualizeAudio = () => {
     if (!analyser.current) return;
@@ -226,110 +252,54 @@ export const Home = () => {
   const transcribeAudio = async () => {
     if (!audioURL) return;
     setTranscription({ text: "", isLoading: true });
+  
     try {
       const data = await transcribeAudioToText(file as File);
-      console.log(data);
-      if (data) {
-        const res = await getEnhancedText();
-        console.log(res);
-        setTranscription({
-          text: res.enhanced_text || "Transcription completed successfully.",
-          isLoading: false,
-        });
+      console.log("🔊 Transcription result:", data);
+  
+      const originalText = data?.transcription;
+  
+      // استخدم المتغير بدل setState
+      const res = await getEnhancedText();
+  
+      setTranscription({
+        text: res.enhanced_text || "Transcription completed successfully.",
+        isLoading: false,
+      });
+  
+      const processed = await processFullPipeline(file as File, user.id);
+      if (processed) {
+        processed.transcription = originalText; // ضفها يدويًا لو مش موجودة في result
+
+        console.log("🧠 Full Processed Object:", processed);
+        await saveTranscriptionToDB(processed);
       }
     } catch (error) {
       setTranscription({ text: "", isLoading: false });
-      console.log(error);
+      console.error("❌ Transcription Error:", error);
     }
   };
+  
+  
+  
 
-  // const transcribeAudio = async () => {
-  //   if (!audioURL) return;
 
-  //   setTranscription({ text: "", isLoading: true });
-
-  //   try {
-  //     // Get the audio blob from the URL
-  //     // const response = await fetch(audioURL);
-  //     // const audioBlob = await response.blob();
-
-  //     // Create a base64 representation of the audio
-  //     const reader = new FileReader();
-  //     reader.readAsDataURL(audioBlob);
-
-  //     reader.onloadend = async () => {
-  //       try {
-  //         const base64Audio = reader.result as string;
-  //         const audioData = base64Audio.split(",")[1]; // Remove the data URL prefix
-  //         console.log(audioData);
-  //         console.log(base64Audio);
-
-  //         // Initialize the model with gemini-1.5-flash
-  //         // const model = genAI?.getGenerativeModel({
-  //         //   model: "gemini-1.5-flash",
-  //         // });
-
-  //         //  Generate content with retry mechanism
-  //         // const result = await retryWithExponentialBackoff(async () => {
-  //         //   return await model.generateContent([
-  //         //     {
-  //         //       inlineData: {
-  //         //         data: audioData,
-  //         //         mimeType: "audio/wav",
-  //         //       },
-  //         //     },
-  //         //   ]);
-  //         // });
-
-  //         // const response = await result.response;
-  //         // const text = response.text();
-  //         const text = "";
-
-  //         setTranscription({
-  //           text,
-  //           isLoading: false,
-  //         });
-  //       } catch (error) {
-  //         console.error("Transcription error:", error);
-
-  //         // Provide a user-friendly message for service overload
-  //         if (error instanceof Error && error.message.includes("503")) {
-  //           setTranscription({
-  //             text: "The service is currently experiencing high demand. Please wait a moment and try again.",
-  //             isLoading: false,
-  //           });
-  //         } else {
-  //           setTranscription({
-  //             text: "An error occurred during transcription. Please try again.",
-  //             isLoading: false,
-  //           });
-  //         }
-  //       }
-  //     };
-  //   } catch (error) {
-  //     console.error("Audio processing error:", error);
-  //     setTranscription({
-  //       text: "Error processing audio. Please try again.",
-  //       isLoading: false,
-  //     });
-  //   }
-  // };
 
   const copyToClipboard = () => {
-    if (transcription.text) {
-      navigator.clipboard.writeText(transcription.text);
+    if (transcriptions.text) {
+      navigator.clipboard.writeText(transcriptions.text);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
   };
 
   const downloadTranscription = () => {
-    if (transcription.text) {
-      const blob = new Blob([transcription.text], { type: "text/plain" });
+    if (transcriptions.text) {
+      const blob = new Blob([transcriptions.text], { type: "text/plain" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "transcription.txt";
+      a.download = "transcriptions.txt";
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -364,7 +334,39 @@ export const Home = () => {
       setSummary({ text: "", isLoading: false, hidden: true });
     }
   };
-
+  const processFullPipeline = async (file: File, userId: number) => {
+    try {
+      const result = {
+        transcription: "", // enhanced text
+        enhanced: "", // لو عندك فرق
+        summary: "",
+        tasks: "",
+        topics: "",
+        User: String(userId),
+      };
+      const test=transcriptionsAdd.text;
+      console.log("📂 Processing file:", test);
+      result.transcription = test || "No transcription available.";
+      const enhanced = await getEnhancedText();
+      result.enhanced = enhanced?.enhanced_text || "";
+  
+      const summary = await getSummary();
+      result.summary = summary?.summary || "";
+  
+      const topics = await getTopics();
+      result.topics = topics?.topics || "";
+  
+      const tasks = await getTasks();
+      result.tasks = tasks?.tasks || "";
+  
+      return result;
+    } catch (error) {
+      console.error("❌ Pipeline error:", error);
+      return null;
+    }
+  };
+  
+  
   // handle extract tasks
   const handleExtract = async () => {
     setExtractTask({ text: "", isLoading: true, hidden: false });
@@ -522,7 +524,7 @@ export const Home = () => {
                   onClick={transcribeAudio}
                   className="mt-6 w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white py-3 px-6 rounded-xl font-semibold transition-all transform hover:scale-105 shadow-lg shadow-purple-500/30 flex items-center justify-center gap-2"
                 >
-                  {transcription.isLoading ? (
+                  {transcriptions.isLoading ? (
                     <>
                       <Loader2 className="w-5 h-5 animate-spin" />
                       <span>Transcribing...</span>
@@ -538,13 +540,13 @@ export const Home = () => {
             )}
 
             {/* Transcription Result */}
-            {(transcription.isLoading || transcription.text) && (
+            {(transcriptions.isLoading || transcriptions.text) && (
               <div className="bg-white/5 backdrop-blur p-6 rounded-xl border border-white/10">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-xl font-semibold text-white">
-                    Transcription
+                    Transcriptions
                   </h2>
-                  {transcription.text && (
+                  {transcriptions.text && (
                     <div className="flex gap-2">
                       <button
                         onClick={copyToClipboard}
@@ -560,14 +562,14 @@ export const Home = () => {
                       <button
                         onClick={downloadTranscription}
                         className="p-2 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors"
-                        title="Download transcription"
+                        title="Download transcriptions"
                       >
                         <Download className="w-5 h-5" />
                       </button>
                     </div>
                   )}
                 </div>
-                {transcription.isLoading ? (
+                {transcriptions.isLoading ? (
                   <div className="flex flex-col items-center justify-center py-8 space-y-4">
                     <Loader2 className="w-10 h-10 animate-spin text-purple-300" />
                     <p className="text-purple-200">Processing your audio...</p>
@@ -575,7 +577,7 @@ export const Home = () => {
                 ) : (
                   <div className="bg-black/20 rounded-lg p-4">
                     <p className="text-purple-100 whitespace-pre-wrap leading-relaxed">
-                      {transcription.text}
+                      {transcriptions.text}
                     </p>
                   </div>
                 )}
@@ -583,7 +585,7 @@ export const Home = () => {
             )}
           </div>
         </div>
-        {transcription.text && (
+        {transcriptions.text && (
           <div className="grid grid-cols-1 md:grid-cols-2 items-center justify-center w-full mt-4">
             <span
               onClick={handleExtract}
