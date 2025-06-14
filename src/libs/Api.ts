@@ -15,17 +15,34 @@ export const transcribeAudioToText = async (file: File) => {
 
   return data;
 };
-export const saveTranscriptionToDB = async (data: {
-  transcription: string;
-  enhanced: string;
-  summary: string;
-  tasks: string;
-  topics: string;
-  User: string;
-}) => {
-  const response = await axios.post(`${back_URL}/api/transcriptions`, data);
+export const saveTranscriptionToDB = async (
+  payload: {
+    transcription: string;
+    enhanced: string;
+    summary: string;
+    tasks: string;
+    topics: string;
+    User: string;
+  },
+  file: File
+) => {
+  const formData = new FormData();
+  formData.append("transcription", payload.transcription);
+  formData.append("enhanced", payload.enhanced);
+  formData.append("summary", payload.summary);
+  formData.append("tasks", payload.tasks);
+  formData.append("topics", payload.topics);
+  formData.append("User", payload.User);
+  formData.append("audio", file);   
+
+  const response = await axios.post(`${back_URL}/api/transcriptions`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
   return response.data;
 };
+
 // 2. تلخيص النص
 export const getSummary = async () => {
   const { data } = await axios.get(`${BASE_URL}/summarize/`);

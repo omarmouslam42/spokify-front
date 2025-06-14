@@ -27,6 +27,7 @@ import { ExtractTask } from "../Components/ExtractTask";
 import { Detect_topics } from "../Components/Detect_topics";
 import { TrelloModal } from "../Components/Trello";
 import { saveTranscriptionToDB } from "../libs/Api"; // استدعاء الدالة
+import { SidebarTranscriptions } from "../components/SidebarTranscriptions";
 
 interface TranscriptionResult {
   text: string;
@@ -83,6 +84,8 @@ export const Home = () => {
   const [transcriptionsAdd, setTranscriptionAdd] = useState({
     text: "",
   });
+  const [selectedTranscript, setSelectedTranscript] = useState(null);
+
   const [audioData, setAudioData] = useState<Float32Array | null>(null);
   const [recordingTime, setRecordingTime] = useState(0);
   const [copied, setCopied] = useState(false);
@@ -111,6 +114,8 @@ export const Home = () => {
   const analyser = useRef<AnalyserNode | null>(null);
   const animationFrame = useRef<number | null>(null);
   const recordingInterval = useRef<number | null>(null);
+  const sidebarRef = useRef<any>(null);
+
 
   const { user } = useAuthStore() as { user: User };
 
@@ -272,7 +277,9 @@ export const Home = () => {
         processed.transcription = originalText; // ضفها يدويًا لو مش موجودة في result
 
         console.log("🧠 Full Processed Object:", processed);
-        await saveTranscriptionToDB(processed);
+        await saveTranscriptionToDB(processed, file as File);
+        sidebarRef.current?.refresh();
+
       }
     } catch (error) {
       setTranscription({ text: "", isLoading: false });
@@ -403,229 +410,261 @@ export const Home = () => {
       setDetect_topics({ text: "", isLoading: false, hidden: true });
     }
   };
+console.log(`D:\\Spokify Project\\New folder\\Spokify-Back${selectedTranscript?.audio?.downloadUrl}`);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-900 p-4 md:px-8">
-      <div className="w-full flex justify-between items-center">
-        <div className="flex items-center space-x-4">
-          {/* Avatar */}
-          <div className="w-14 h-14 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center text-white text-2xl font-bold shadow-lg overflow-hidden">
-            {user?.profileImage ? (
-              <img
-                src={user.profileImage}
-                className="w-full h-full object-cover"
-                alt="Profile"
-              />
-            ) : (
-              user?.userName?.charAt(0).toUpperCase()
-            )}
-          </div>
-
-          {/* Username */}
-          <Link to="/profile" className="text-white text-xl font-semibold">
-            {user?.userName}
-          </Link>
-        </div>
-
-        <button
-          onClick={logout}
-          className="flex gap-2 bg-gradient-to-r from-purple-600 to-blue-500 hover:from-purple-700 hover:to-blue-600 text-white 
-        font-bold p-3 rounded-xl shadow-lg shadow-purple-800/30 transition-all duration-200 hover:scale-105"
-        >
-          <LogOut /> log out
-        </button>
+    <div className="flex h-screen">
+    
+      <div className="flex-1 overflow-y-auto min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-900 p-4 md:px-8">
+    
+<div className="w-full flex justify-between items-start">
+  <div className="flex flex-col space-y-2">
+    <div className="flex items-center space-x-4">
+      <div className="w-14 h-14 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center text-white text-2xl font-bold shadow-lg overflow-hidden">
+        {user?.profileImage ? (
+          <img src={user.profileImage} className="w-full h-full object-cover" alt="Profile" />
+        ) : (
+          user?.userName?.charAt(0).toUpperCase()
+        )}
       </div>
-      <div className="max-w-4xl mx-auto">
-        {/* Hero Section */}
-        <div className="text-center mb-8 md:mb-12 mt-6">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <div className="relative">
-              <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full blur opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-pulse"></div>
-              <Waveform className="w-12 h-12 text-white relative z-10" />
-            </div>
-            <h1 className="text-5xl md:text-6xl font-bold text-white tracking-tight">
-              SPOKIFY
-            </h1>
-          </div>
-          <p className="text-purple-100 text-lg md:text-xl">
-            Transform your voice into text, instantly.
-          </p>
-        </div>
+      <Link to="/profile" className="text-white text-xl font-semibold">
+        {user?.userName}
+      </Link>
+    </div>
 
-        <div className="bg-white/5 backdrop-blur-lg rounded-2xl shadow-2xl p-6 md:p-8 border border-white/10">
-          <div className="space-y-8">
-            {/* Recording Controls */}
-            <div className="flex flex-col sm:flex-row justify-center gap-4">
-              <button
-                onClick={isRecording ? stopRecording : startRecording}
-                className={`relative flex items-center justify-center gap-2 px-8 py-4 rounded-xl font-semibold transition-all transform hover:scale-105 ${
-                  isRecording
-                    ? "bg-red-500 hover:bg-red-600 text-white shadow-lg shadow-red-500/30"
-                    : "bg-blue-500 hover:bg-blue-600 text-white shadow-lg shadow-blue-500/30"
-                }`}
-              >
-                {isRecording ? (
-                  <>
-                    <div className="absolute -inset-1 bg-red-500 rounded-full blur opacity-75 animate-ping"></div>
-                    <Square className="w-6 h-6 relative z-10" />
-                    <span className="relative z-10">Stop Recording</span>
-                    <span className="ml-2 text-sm font-mono relative z-10">
-                      {formatTime(recordingTime)}
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <Mic className="w-6 h-6" /> Start Recording
-                  </>
-                )}
-              </button>
+    <SidebarTranscriptions
+  ref={sidebarRef}
+  userId={user.id}
+  onSelect={setSelectedTranscript}
+/>
+    </div>
 
-              <label className="flex items-center justify-center gap-2 px-8 py-4 bg-purple-500 hover:bg-purple-600 text-white rounded-xl cursor-pointer font-semibold transition-all transform hover:scale-105 shadow-lg shadow-purple-500/30">
-                <Upload className="w-6 h-6" />
-                Upload Audio
-                <input
-                  type="file"
-                  accept="audio/*"
-                  onChange={handleFileUpload}
-                  className="hidden"
-                />
-              </label>
-            </div>
+  <button
+    onClick={logout}
+    className="flex gap-2 bg-gradient-to-r from-purple-600 to-blue-500 hover:from-purple-700 hover:to-blue-600 text-white 
+    font-bold p-3 rounded-xl shadow-lg shadow-purple-800/30 transition-all duration-200 hover:scale-105"
+  >
+    <LogOut /> log out
+  </button>
+</div>
 
-            {/* Waveform Visualization */}
-            {isRecording && audioData && (
-              <div className="h-24 bg-black/20 rounded-xl p-4 overflow-hidden">
-                <div className="flex items-center justify-between h-full">
-                  {Array.from(audioData).map((value, index) => {
-                    // Only render a subset of the data points for performance
-                    if (index % 4 !== 0) return null;
-
-                    const height = Math.abs(value) * 100;
-                    return (
-                      <div
-                        key={index}
-                        className="w-1 bg-gradient-to-t from-blue-500 to-purple-500 rounded-full mx-0.5"
-                        style={{ height: `${Math.max(2, height)}px` }}
-                      />
-                    );
-                  })}
-                </div>
+  
+        <div className="max-w-4xl mx-auto">
+          {/* Hero Section */}
+          <div className="text-center mb-8 md:mb-12 mt-6">
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <div className="relative">
+                <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full blur opacity-75 animate-pulse"></div>
+                <Waveform className="w-12 h-12 text-white relative z-10" />
               </div>
-            )}
-
-            {/* Audio Player */}
-            {audioURL && (
-              <div className="bg-white/5 backdrop-blur p-6 rounded-xl border border-white/10">
-                <div className="flex items-center gap-3">
-                  <Volume2 className="w-6 h-6 text-purple-300" />
-                  <audio src={audioURL} controls className="w-full h-10" />
-                </div>
+              <h1 className="text-5xl md:text-6xl font-bold text-white tracking-tight">
+                SPOKIFY
+              </h1>
+            </div>
+            <p className="text-purple-100 text-lg md:text-xl">
+              Transform your voice into text, instantly.
+            </p>
+          </div>
+  
+          <div className="bg-white/5 backdrop-blur-lg rounded-2xl shadow-2xl p-6 md:p-8 border border-white/10">
+            <div className="space-y-8">
+              {/* Recording Controls */}
+              <div className="flex flex-col sm:flex-row justify-center gap-4">
                 <button
-                  onClick={transcribeAudio}
-                  className="mt-6 w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white py-3 px-6 rounded-xl font-semibold transition-all transform hover:scale-105 shadow-lg shadow-purple-500/30 flex items-center justify-center gap-2"
+                  onClick={isRecording ? stopRecording : startRecording}
+                  className={`relative flex items-center justify-center gap-2 px-8 py-4 rounded-xl font-semibold transition-all transform hover:scale-105 ${
+                    isRecording
+                      ? "bg-red-500 hover:bg-red-600 text-white shadow-lg shadow-red-500/30"
+                      : "bg-blue-500 hover:bg-blue-600 text-white shadow-lg shadow-blue-500/30"
+                  }`}
                 >
-                  {transcriptions.isLoading ? (
+                  {isRecording ? (
                     <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      <span>Transcribing...</span>
+                      <div className="absolute -inset-1 bg-red-500 rounded-full blur opacity-75 animate-ping"></div>
+                      <Square className="w-6 h-6 relative z-10" />
+                      <span className="relative z-10">Stop Recording</span>
+                      <span className="ml-2 text-sm font-mono relative z-10">
+                        {formatTime(recordingTime)}
+                      </span>
                     </>
                   ) : (
                     <>
-                      <Waveform className="w-5 h-5" />
-                      <span>Transcribe Audio</span>
+                      <Mic className="w-6 h-6" /> Start Recording
                     </>
                   )}
                 </button>
+  
+                <label className="flex items-center justify-center gap-2 px-8 py-4 bg-purple-500 hover:bg-purple-600 text-white rounded-xl cursor-pointer font-semibold transition-all transform hover:scale-105 shadow-lg shadow-purple-500/30">
+                  <Upload className="w-6 h-6" />
+                  Upload Audio
+                  <input
+                    type="file"
+                    accept="audio/*"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                  />
+                </label>
               </div>
-            )}
-
-            {/* Transcription Result */}
-            {(transcriptions.isLoading || transcriptions.text) && (
-              <div className="bg-white/5 backdrop-blur p-6 rounded-xl border border-white/10">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl font-semibold text-white">
-                    Transcriptions
-                  </h2>
-                  {transcriptions.text && (
-                    <div className="flex gap-2">
-                      <button
-                        onClick={copyToClipboard}
-                        className="p-2 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors"
-                        title="Copy to clipboard"
-                      >
-                        {copied ? (
-                          <Check className="w-5 h-5" />
-                        ) : (
-                          <Copy className="w-5 h-5" />
-                        )}
-                      </button>
-                      <button
-                        onClick={downloadTranscription}
-                        className="p-2 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors"
-                        title="Download transcriptions"
-                      >
-                        <Download className="w-5 h-5" />
-                      </button>
+  
+              {/* Waveform Visualization */}
+              {isRecording && audioData && (
+                <div className="h-24 bg-black/20 rounded-xl p-4 overflow-hidden">
+                  <div className="flex items-center justify-between h-full">
+                    {Array.from(audioData).map((value, index) => {
+                      if (index % 4 !== 0) return null;
+                      const height = Math.abs(value) * 100;
+                      return (
+                        <div
+                          key={index}
+                          className="w-1 bg-gradient-to-t from-blue-500 to-purple-500 rounded-full mx-0.5"
+                          style={{ height: `${Math.max(2, height)}px` }}
+                        />
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+  
+              {/* Audio Player */}
+              {audioURL && (
+                <div className="bg-white/5 backdrop-blur p-6 rounded-xl border border-white/10">
+                  <div className="flex items-center gap-3">
+                    <Volume2 className="w-6 h-6 text-purple-300" />
+                    <audio src={audioURL} controls className="w-full h-10" />
+                  </div>
+                  <button
+                    onClick={transcribeAudio}
+                    className="mt-6 w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white py-3 px-6 rounded-xl font-semibold transition-all transform hover:scale-105 shadow-lg shadow-purple-500/30 flex items-center justify-center gap-2"
+                  >
+                    {transcriptions.isLoading ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        <span>Transcribing...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Waveform className="w-5 h-5" />
+                        <span>Transcribe Audio</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
+  
+              {/* Transcription Result */}
+              {(transcriptions.isLoading || transcriptions.text) && (
+                <div className="bg-white/5 backdrop-blur p-6 rounded-xl border border-white/10">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-xl font-semibold text-white">
+                      Transcriptions
+                    </h2>
+                    {transcriptions.text && (
+                      <div className="flex gap-2">
+                        <button
+                          onClick={copyToClipboard}
+                          className="p-2 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors"
+                          title="Copy to clipboard"
+                        >
+                          {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
+                        </button>
+                        <button
+                          onClick={downloadTranscription}
+                          className="p-2 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors"
+                          title="Download transcriptions"
+                        >
+                          <Download className="w-5 h-5" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  {transcriptions.isLoading ? (
+                    <div className="flex flex-col items-center justify-center py-8 space-y-4">
+                      <Loader2 className="w-10 h-10 animate-spin text-purple-300" />
+                      <p className="text-purple-200">Processing your audio...</p>
+                    </div>
+                  ) : (
+                    <div className="bg-black/20 rounded-lg p-4">
+                      <p className="text-purple-100 whitespace-pre-wrap leading-relaxed">
+                        {transcriptions.text}
+                      </p>
                     </div>
                   )}
                 </div>
-                {transcriptions.isLoading ? (
-                  <div className="flex flex-col items-center justify-center py-8 space-y-4">
-                    <Loader2 className="w-10 h-10 animate-spin text-purple-300" />
-                    <p className="text-purple-200">Processing your audio...</p>
-                  </div>
-                ) : (
-                  <div className="bg-black/20 rounded-lg p-4">
-                    <p className="text-purple-100 whitespace-pre-wrap leading-relaxed">
-                      {transcriptions.text}
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
+              )}
+            </div>
           </div>
-        </div>
-        {transcriptions.text && (
-          <div className="grid grid-cols-1 md:grid-cols-2 items-center justify-center w-full mt-4">
-            <span
-              onClick={handleExtract}
-              className="w-1/2 m-auto text-center rounded-lg mt-5 text-white bg-white/5 backdrop-blur-lg shadow-2xl p-4 md:p-6 border cursor-pointer border-white/10 hover:bg-white/10 duration-75"
-            >
-              <h4>Extracted Tasks</h4>
-            </span>
-            <span
-              onClick={handleSummury}
-              className="w-1/2 m-auto text-center rounded-lg mt-5 text-white bg-white/5 backdrop-blur-lg shadow-2xl p-4 md:p-6 border cursor-pointer border-white/10 hover:bg-white/10 duration-75"
-            >
-              <h4>Summarization</h4>
-            </span>
-            <span
-              onClick={() => setOpenTrello(true)}
-              className="w-1/2 m-auto text-center rounded-lg mt-5 text-white bg-white/5 backdrop-blur-lg shadow-2xl p-4 md:p-6 border cursor-pointer border-white/10 hover:bg-white/10 duration-75"
-            >
-              <h4>Add to trello</h4>
-            </span>
-            <span
-              onClick={handleDetect_topics}
-              className="w-1/2 m-auto text-center rounded-lg mt-5 text-white bg-white/5 backdrop-blur-lg shadow-2xl p-4 md:p-6 border cursor-pointer border-white/10 hover:bg-white/10 duration-75"
-            >
-              <h4>Detected Topics</h4>
-            </span>
+  
+          {/* Actions */}
+          {transcriptions.text && (
+            <div className="grid grid-cols-1 md:grid-cols-2 items-center justify-center w-full mt-4">
+              <span
+                onClick={handleExtract}
+                className="w-1/2 m-auto text-center rounded-lg mt-5 text-white bg-white/5 backdrop-blur-lg shadow-2xl p-4 md:p-6 border cursor-pointer border-white/10 hover:bg-white/10 duration-75"
+              >
+                <h4>Extracted Tasks</h4>
+              </span>
+              <span
+                onClick={handleSummury}
+                className="w-1/2 m-auto text-center rounded-lg mt-5 text-white bg-white/5 backdrop-blur-lg shadow-2xl p-4 md:p-6 border cursor-pointer border-white/10 hover:bg-white/10 duration-75"
+              >
+                <h4>Summarization</h4>
+              </span>
+              <span
+                onClick={() => setOpenTrello(true)}
+                className="w-1/2 m-auto text-center rounded-lg mt-5 text-white bg-white/5 backdrop-blur-lg shadow-2xl p-4 md:p-6 border cursor-pointer border-white/10 hover:bg-white/10 duration-75"
+              >
+                <h4>Add to Trello</h4>
+              </span>
+              <span
+                onClick={handleDetect_topics}
+                className="w-1/2 m-auto text-center rounded-lg mt-5 text-white bg-white/5 backdrop-blur-lg shadow-2xl p-4 md:p-6 border cursor-pointer border-white/10 hover:bg-white/10 duration-75"
+              >
+                <h4>Detected Topics</h4>
+              </span>
+            </div>
+          )}
+  
+          {!summary?.hidden && <Summary summary={summary} />}
+          {!extractTask?.hidden && <ExtractTask task={extractTask} />}
+          {!detect_topics?.hidden && <Detect_topics topic={detect_topics} />}
+          <TrelloModal open={openTrello} onClose={() => setOpenTrello(false)} />
+  
+          {/* Transcript Details Section from Sidebar */}
+          {selectedTranscript && (
+            <div className="mt-10 bg-white/5 backdrop-blur p-6 rounded-xl border border-white/10">
+              <h3 className="text-white text-xl font-bold mb-4">Transcript Details</h3>
+              <p className="text-purple-200 whitespace-pre-wrap mb-2">
+                <strong>Enhanced:</strong> {selectedTranscript.enhanced}
+              </p>
+              <p className="text-purple-200 whitespace-pre-wrap mb-2">
+                <strong>Summary:</strong> {selectedTranscript.summary}
+              </p>
+              <p className="text-purple-200 whitespace-pre-wrap mb-2">
+                <strong>Tasks:</strong> {selectedTranscript.tasks}
+              </p>
+              <p className="text-purple-200 whitespace-pre-wrap mb-2">
+                <strong>Topics:</strong> {selectedTranscript.topics}
+              </p>
+              {selectedTranscript.audio?.downloadUrl && (
+                <div className="mt-4">
+                  <h4 className="text-white font-semibold mb-2">Audio Playback</h4>
+                  <audio controls src={`http://localhost:4000/audio/${selectedTranscript.audio.downloadUrl}`} />
+
+
+                </div>
+              )}
+            </div>
+          )}
+  
+          {/* Footer */}
+          <div className="mt-8 text-center text-purple-200 text-sm">
+            <p>
+              Powered by Google Gemini AI • SPOKIFY © {new Date().getFullYear()}
+            </p>
           </div>
-        )}
-
-        {!summary?.hidden && <Summary summary={summary} />}
-        {!extractTask?.hidden && <ExtractTask task={extractTask} />}
-        {!detect_topics?.hidden && <Detect_topics topic={detect_topics} />}
-        <TrelloModal open={openTrello} onClose={() => setOpenTrello(false)} />
-
-        {/* Footer */}
-        <div className="mt-8 text-center text-purple-200 text-sm">
-          <p>
-            Powered by Google Gemini AI • SPOKIFY © {new Date().getFullYear()}
-          </p>
         </div>
       </div>
     </div>
   );
+  
 };
