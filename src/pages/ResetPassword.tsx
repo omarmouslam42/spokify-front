@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import axios from "axios";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, Loader2 } from "lucide-react";
 
 const ResetPassword = () => {
   const [searchParams] = useSearchParams();
@@ -12,7 +12,7 @@ const ResetPassword = () => {
   const [msg, setMsg] = useState("");
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);
-
+ const navigate = useNavigate();
   const toggelPass = () => {
     setIsSowPass(!isSowPass);
   };
@@ -25,7 +25,7 @@ const ResetPassword = () => {
 
     try {
       const res = await axios.post(
-        "http://localhost:4000/api/v1/reset-password/confirm",
+        "http://localhost:4000/api/v1/auth/reset-password",
         {
           token,
           newPassword: password,
@@ -43,9 +43,14 @@ const ResetPassword = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-900 flex items-center justify-center px-4 py-8">
       <div className="bg-white/5 backdrop-blur-xl shadow-2xl border border-white/10 rounded-3xl w-full max-w-xl p-8 md:p-10">
+         <ArrowLeft
+          className="cursor-pointer"
+          onClick={() => navigate("/login")}
+          color="white"
+        />
         <h2 className="text-3xl font-bold text-white mb-6 text-center">
           Reset Your Password
-        </h2>
+        </h2>``
 
         <form onSubmit={handleReset} className="space-y-5">
           <div className="space-y-2 relative">

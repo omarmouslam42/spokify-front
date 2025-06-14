@@ -38,20 +38,20 @@ export const TrelloModal = ({ open, onClose }: TrelloModalProps) => {
   const [error, setError] = useState<string | null>(null);
 
   const onSubmit = async (data: TrelloReq) => {
-    setLoading(true);
-    setResult(null);
-    setError(null);
-    try {
-      const response = await axios.post(
-        `${BASE_URL}/extract_and_add_tasks/`,
-        data
-      );
-      setResult(response.data);
-    } catch (err: any) {
-      setError(err.response?.data?.detail || "Something went wrong");
-    } finally {
-      setLoading(false);
-    }
+    // setLoading(true);
+    // setResult(null);
+    // setError(null);
+    // // try {
+    //   const response = await axios.post(
+    //     `${BASE_URL}/extract_and_add_tasks/`,
+    //     data
+    //   );
+    //   setResult(response.data);
+    // } catch (err: any) {
+    //   setError(err.response?.data?.detail || "Something went wrong");
+    // } finally {
+    //   setLoading(false);
+    // }
   };
 
   const handleClose = () => {
@@ -157,7 +157,12 @@ export const TrelloModal = ({ open, onClose }: TrelloModalProps) => {
         </form>
 
         <Box sx={{ mt: 4 }} className="flex justify-end gap-3">
-          <Button onClick={handleClose} color="inherit" variant="outlined">
+          <Button
+            type="button"
+            onClick={handleClose}
+            color="inherit"
+            variant="outlined"
+          >
             Cancel
           </Button>
           <Button
