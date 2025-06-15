@@ -394,7 +394,7 @@ export const Home = () => {
   console.log(selectedTranscript);
 
   return (
-    <div className="flex h-screen">
+    <div className="flex flex-col lg:flex-row h-screen">
       <div className="flex-1 overflow-y-auto min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-900 p-4 md:px-8">
         <div className="w-full flex justify-between items-start">
           <div className="flex flex-col space-y-2">
@@ -425,13 +425,13 @@ export const Home = () => {
           </button>
         </div>
 
-        <div  className="flex justify-center mt-4">
+        <div  className="flex  flex-col-reverse lg:flex-row lg:space-x-6 mt-3">
           <SidebarTranscriptions
             ref={sidebarRef}
             userId={user.id}
             onSelect={setSelectedTranscript}
           />
-          <div className="max-w-4xl mx-auto">
+          <div className=" mx-auto w-full flex-col items-center justify-between">
             {/* Hero Section */}
             <div className="text-center mb-8 md:mb-12 mt-6">
               <div className="flex items-center justify-center gap-3 mb-4">

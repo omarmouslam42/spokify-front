@@ -29,7 +29,8 @@ export const SidebarTranscriptions = forwardRef(
     }));
 
     return (
-      <div className="bg-white/10 p-4 rounded-lg shadow-md h-screen">
+      <div className="bg-white/10 p-4 rounded-lg shadow-md flex flex-col
+                   h-screen w-full sm:w-2/5 md:w-1/3 lg:w-1/4 xl:w-1/5">
         <h3 className="text-white font-semibold mb-3">My Transcriptions :</h3>
         <ul className="space-y-2 max-h-[300px] overflow-y-auto">
           {transcriptions.map((item: any) => (
