@@ -26,35 +26,45 @@ export const saveTranscriptionToDB = async (
   },
   file: File
 ) => {
-  const formData = new FormData();
-  formData.append("transcription", payload.transcription);
-  formData.append("enhanced", payload.enhanced);
-  formData.append("summary", payload.summary);
-  formData.append("tasks", payload.tasks);
-  formData.append("topics", payload.topics);
-  formData.append("User", payload.User);
-  formData.append("audio", file);   
+  try {
+    const formData = new FormData();
+    formData.append("transcription", payload.transcription);
+    formData.append("enhanced", payload.enhanced);
+    formData.append("summary", payload.summary);
+    formData.append("tasks", payload.tasks);
+    formData.append("topics", payload.topics);
+    formData.append("User", payload.User);
+    formData.append("audio", file);
 
-  const response = await axios.post(`${back_URL}/api/transcriptions`, formData, {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
-  });
-  return response.data;
+    const response = await axios.post(
+      `${back_URL}/api/transcriptions`,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+    console.log(response);
+
+    return response.data;
+  } catch (error) {
+    console.log(error);
+  }
 };
 
 // 2. تلخيص النص
 export const getSummary = async () => {
   const { data } = await axios.get(`${BASE_URL}/summarize/`);
   console.log(data);
-  
+
   return data;
 };
 
 export const getEnhancedText = async () => {
   const { data } = await axios.get(`${BASE_URL}/enhance/`);
   console.log(data);
-  
+
   return data;
 };
 
